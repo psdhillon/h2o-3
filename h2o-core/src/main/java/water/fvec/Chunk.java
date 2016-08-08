@@ -468,6 +468,7 @@ public abstract class Chunk extends Iced<Chunk> {
   }
 
   public final double [] set(double [] d){
+    setWrite();
     assert d.length == _len && _chk2 == null;
     _chk2 = new NewChunk(this,d);
     return d;
