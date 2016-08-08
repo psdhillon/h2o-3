@@ -374,7 +374,7 @@ public class TestUtil extends Iced {
     Cmp2( Frame fr ) { _fr = fr; }
     boolean _unequal;
     @Override public void map( Chunk chks[] ) {
-      for( int cols=0; cols<chks.length>>1; cols++ ) {
+      for( int cols=0; cols<chks.length; cols++ ) {
         if( _unequal ) return;
         Chunk c0 = chks[cols];
         Vec v1 = _fr.vecs()[cols];
