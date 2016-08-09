@@ -8,8 +8,6 @@ import water.rapids.ast.prims.advmath.AstKFold;
 import water.util.*;
 import static water.util.FrameUtils.isBitIdentical;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 

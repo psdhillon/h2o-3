@@ -88,13 +88,22 @@ public class FrameUtils {
    *  @param fr2 Frame
    *  @return true if equal  */
   public static boolean isBitIdentical(Frame fr1, Frame fr2) {
+    return isIdenticalUpToRelTolerance(fr1,fr2,0);
+  }
+
+  /** Compare 2 frames
+   *  @param fr1 Frame
+   *  @param fr2 Frame
+   *  @param epsilon Relative tolerance for floating point numbers
+   *  @return true if equal  */
+  public static boolean isIdenticalUpToRelTolerance(Frame fr1, Frame fr2, double epsilon) {
     if (fr1 == fr2) return true;
     if( fr1.numCols() != fr2.numCols() ) return false;
     if( fr1.numRows() != fr2.numRows() ) return false;
     if( fr1.isCompatible(fr2) )
-      return !(new Cmp1().doAll(new Frame(fr1).add(fr2))._unequal);
+      return !(new Cmp1(epsilon).doAll(new Frame(fr1).add(fr2))._unequal);
     // Else do it the slow hard way
-    return !(new Cmp2(fr2).doAll(fr1)._unequal);
+    return !(new Cmp2(fr2, epsilon).doAll(fr1)._unequal);
   }
 
   private static class Vec2ArryTsk extends MRTask<Vec2ArryTsk> {
@@ -697,6 +706,9 @@ public class FrameUtils {
 
   // Fast compatible Frames
   protected static class Cmp1 extends MRTask<Cmp1> {
+    final double _epsilon;
+    Cmp1( ) { this(0); }
+    Cmp1( double epsilon ) { _epsilon = epsilon; }
     boolean _unequal;
     @Override public void map( Chunk chks[] ) {
       for( int cols=0; cols<chks.length>>1; cols++ ) {
@@ -723,7 +735,7 @@ public class FrameUtils {
             }
           }else {
             double d0 = c0.atd(rows), d1 = c1.atd(rows);
-            if (!(Double.isNaN(d0) && Double.isNaN(d1)) && (d0 != d1)) {
+            if (!(Double.isNaN(d0) && Double.isNaN(d1)) && !(Math.abs(d0-d1)<=Math.abs(d0+d1)*_epsilon) ) {
               _unequal = true;
               return;
             }
@@ -736,17 +748,19 @@ public class FrameUtils {
 
   // Slow incompatible frames
   protected static class Cmp2 extends MRTask<Cmp2> {
-    final Frame _frrrr;
-    Cmp2( Frame fr ) { _frrrr = fr; }
+    final Frame _frame;
+    final double _epsilon;
+    Cmp2( Frame fr ) { this(fr, 0); }
+    Cmp2( Frame fr, double epsilon ) { _frame = fr; _epsilon = epsilon; }
     boolean _unequal;
     @Override public void map( Chunk chks[] ) {
       for( int cols=0; cols<chks.length; cols++ ) {
         if( _unequal ) return;
         Chunk c0 = chks[cols];
-        Vec v1 = _frrrr.vecs()[cols];
+        Vec v1 = _frame.vecs()[cols];
         for( int rows = 0; rows < chks[0]._len; rows++ ) {
           double d0 = c0.atd(rows), d1 = v1.at(c0.start() + rows);
-          if( !(Double.isNaN(d0) && Double.isNaN(d1)) && (d0 != d1) ) {
+          if( !(Double.isNaN(d0) && Double.isNaN(d1)) && !(Math.abs(d0-d1)<=Math.abs(d0+d1)*_epsilon) ) {
             _unequal = true; return;
           }
         }
